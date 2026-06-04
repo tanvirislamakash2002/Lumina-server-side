@@ -10,6 +10,8 @@ import { usersRouter } from "./modules/users/users.route";
 import { projectsRouter } from "./modules/projects/projects.route";
 import { tasksRouter } from "./modules/tasks/tasks.route";
 import { projectMembersRouter } from "./modules/project-members/project-members.route";
+import { commentsRouter } from "./modules/comments/comments.route";
+import { attachmentsRouter } from "./modules/attachments/attachments.route";
 
 const app: Application = express()
 
@@ -60,6 +62,8 @@ app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/projects', projectsRouter);
 app.use('/api/v1/tasks', tasksRouter);
 app.use('/api/v1/project-members', projectMembersRouter);
+app.use('/api/v1/comments', commentsRouter);
+app.use('/api/v1/attachments', attachmentsRouter);
 
 app.get("/", (req, res) => {
     res.send("welcome to lumina server!")
