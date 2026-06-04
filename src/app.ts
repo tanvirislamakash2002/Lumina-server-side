@@ -14,6 +14,7 @@ import { commentsRouter } from "./modules/comments/comments.route";
 import { attachmentsRouter } from "./modules/attachments/attachments.route";
 import { activitiesRouter } from "./modules/activities/activities.route";
 import { notificationsRouter } from "./modules/notifications/notifications.route";
+import { dashboardRouter } from "./modules/dashboard/dashboard.route";
 
 const app: Application = express()
 
@@ -68,6 +69,7 @@ app.use('/api/v1/comments', commentsRouter);
 app.use('/api/v1/attachments', attachmentsRouter);
 app.use('/api/v1/activities', activitiesRouter);
 app.use('/api/v1/notifications', notificationsRouter);
+app.use('/api/v1/dashboard', dashboardRouter);
 
 app.get("/", (req, res) => {
     res.send("welcome to lumina server!")
