@@ -8,6 +8,7 @@ import { optionalAuth } from "./middlewares/optionalAuth";
 import { uploadRouter } from "./modules/upload/upload.route";
 import { usersRouter } from "./modules/users/users.route";
 import { projectsRouter } from "./modules/projects/projects.route";
+import { tasksRouter } from "./modules/tasks/tasks.route";
 
 const app: Application = express()
 
@@ -56,6 +57,7 @@ app.all("/api/auth/*splat", toNodeHandler(auth));
 app.use('/api/v1/upload', uploadRouter);
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/projects', projectsRouter);
+app.use('/api/v1/tasks', tasksRouter);
 
 app.get("/", (req, res) => {
     res.send("welcome to lumina server!")
