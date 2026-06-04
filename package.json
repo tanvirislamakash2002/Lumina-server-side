@@ -1,0 +1,45 @@
+{
+  "name": "lumina-server-side",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npx tsx watch src/server.ts",
+    "build": "prisma generate && tsup src/server.ts --format esm --platform node --target node20 --outDir api --external pg-native",
+    "stripe:webhook": "stripe listen --forward-to localhost:5000/webhook",
+    "seed:admin": "npx tsx watch src/scripts/seedAdmin.ts",
+    "seed:sellers": "npx tsx watch src/scripts/seedSellers.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.1.0",
+    "@types/node": "^25.6.0",
+    "@types/nodemailer": "^7.0.11",
+    "@types/pg": "^8.18.0",
+    "prisma": "^7.5.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.7.0",
+    "axios": "^1.13.6",
+    "bcryptjs": "^3.0.3",
+    "better-auth": "^1.5.5",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "form-data": "^4.0.5",
+    "multer": "^2.1.1",
+    "nodemailer": "^8.0.2",
+    "pg": "^8.20.0",
+    "stripe": "^22.2.0"
+  }
+}
