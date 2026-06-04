@@ -15,6 +15,7 @@ enum ActivityAction {
   USER_LOGIN
   USER_LOGOUT
   USER_REGISTER
+  ADMIN_ACTION
 }
 
 model Activity {
