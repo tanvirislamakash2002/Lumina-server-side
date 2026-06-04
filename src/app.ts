@@ -13,6 +13,7 @@ import { projectMembersRouter } from "./modules/project-members/project-members.
 import { commentsRouter } from "./modules/comments/comments.route";
 import { attachmentsRouter } from "./modules/attachments/attachments.route";
 import { activitiesRouter } from "./modules/activities/activities.route";
+import { notificationsRouter } from "./modules/notifications/notifications.route";
 
 const app: Application = express()
 
@@ -66,6 +67,7 @@ app.use('/api/v1/project-members', projectMembersRouter);
 app.use('/api/v1/comments', commentsRouter);
 app.use('/api/v1/attachments', attachmentsRouter);
 app.use('/api/v1/activities', activitiesRouter);
+app.use('/api/v1/notifications', notificationsRouter);
 
 app.get("/", (req, res) => {
     res.send("welcome to lumina server!")
