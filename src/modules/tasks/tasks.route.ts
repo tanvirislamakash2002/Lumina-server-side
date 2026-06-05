@@ -9,6 +9,7 @@ const router = express.Router();
 router.use(auth(Role.TEAM_MEMBER, Role.PROJECT_MANAGER, Role.ADMIN));
 
 // Task CRUD operations
+router.get("/", tasksController.getAllTasks);
 router.post("/project/:projectId", tasksController.createTask);
 router.get("/project/:projectId", tasksController.getTasks);
 router.get("/my-tasks", tasksController.getTasksByUser);

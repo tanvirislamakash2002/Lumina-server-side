@@ -1,6 +1,167 @@
 import { Prisma, Priority, TaskStatus } from "../../generated/prisma";
 import { prisma } from "../../lib/prisma";
 
+const getAllTasks = async (
+    userId: string,
+    userRole: string,
+    params: {
+        page: number;
+        limit: number;
+        search?: string;
+        status?: string;
+        priority?: string;
+        projectId?: string;
+        assignedTo?: string;
+        sortBy: string;
+    }
+) => {
+    try {
+        const { page, limit, search, status, priority, projectId, assignedTo, sortBy } = params;
+        const skip = (page - 1) * limit;
+
+        // Build where clause based on user role
+        let where: Prisma.TaskWhereInput = {};
+
+        // Non-admin users can only see tasks from their projects
+        if (userRole !== "ADMIN" && userRole !== "PROJECT_MANAGER") {
+            const userProjects = await prisma.projectMember.findMany({
+                where: { userId },
+                select: { projectId: true },
+            });
+            const projectIds = userProjects.map(p => p.projectId);
+            where.projectId = { in: projectIds };
+        }
+
+        // Apply filters
+        if (search) {
+            where.OR = [
+                { title: { contains: search, mode: "insensitive" } },
+                { description: { contains: search, mode: "insensitive" } },
+            ];
+        }
+
+        if (status && status !== "all") {
+            where.status = status as TaskStatus;
+        }
+
+        if (priority && priority !== "all") {
+            where.priority = priority as Priority;
+        }
+
+        if (projectId && projectId !== "all") {
+            where.projectId = projectId;
+        }
+
+        if (assignedTo && assignedTo !== "all") {
+            where.assignedTo = assignedTo;
+        }
+
+        // Build order by
+        let orderBy: Prisma.TaskOrderByWithRelationInput = {};
+        switch (sortBy) {
+            case "oldest":
+                orderBy = { createdAt: "asc" };
+                break;
+            case "deadline_asc":
+                orderBy = { dueDate: "asc" };
+                break;
+            case "deadline_desc":
+                orderBy = { dueDate: "desc" };
+                break;
+            case "priority_high":
+                orderBy = { priority: "asc" };
+                break;
+            case "title_asc":
+                orderBy = { title: "asc" };
+                break;
+            default:
+                orderBy = { createdAt: "desc" };
+        }
+
+        const tasks = await prisma.task.findMany({
+            where,
+            skip,
+            take: limit,
+            orderBy,
+            include: {
+                assignedUser: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        image: true,
+                    },
+                },
+                project: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                _count: {
+                    select: {
+                        comments: true,
+                        attachments: true,
+                    },
+                },
+            },
+        });
+
+        const totalItems = await prisma.task.count({ where });
+
+        // Get stats
+        const stats = await prisma.$transaction([
+            prisma.task.count({ where }),
+            prisma.task.count({ where: { ...where, status: "TODO" } }),
+            prisma.task.count({ where: { ...where, status: "IN_PROGRESS" } }),
+            prisma.task.count({ where: { ...where, status: "COMPLETED" } }),
+            prisma.task.count({
+                where: {
+                    ...where,
+                    status: { not: "COMPLETED" },
+                    dueDate: { lt: new Date() },
+                },
+            }),
+        ]);
+
+        return {
+            success: true,
+            data: {
+                tasks: tasks.map(task => ({
+                    id: task.id,
+                    title: task.title,
+                    description: task.description,
+                    dueDate: task.dueDate,
+                    priority: task.priority,
+                    status: task.status,
+                    assignedTo: task.assignedUser,
+                    project: task.project,
+                    commentCount: task._count.comments,
+                    attachmentCount: task._count.attachments,
+                    createdAt: task.createdAt,
+                    updatedAt: task.updatedAt,
+                })),
+                pagination: {
+                    currentPage: page,
+                    totalPages: Math.ceil(totalItems / limit),
+                    totalItems,
+                    itemsPerPage: limit,
+                },
+                stats: {
+                    total: stats[0],
+                    todo: stats[1],
+                    inProgress: stats[2],
+                    completed: stats[3],
+                    overdue: stats[4],
+                },
+            },
+        };
+    } catch (error) {
+        console.error("Get all tasks error:", error);
+        return { success: false, message: "Failed to fetch tasks" };
+    }
+};
+
 const createTask = async (
     projectId: string,
     userId: string,
@@ -806,6 +967,7 @@ const getOverdueTasks = async (userId: string, userRole: string) => {
 };
 
 export const tasksService = {
+    getAllTasks,
     createTask,
     getTasks,
     getTaskById,

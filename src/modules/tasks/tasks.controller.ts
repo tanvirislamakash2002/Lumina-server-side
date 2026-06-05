@@ -1,6 +1,38 @@
 import { Request, Response, NextFunction } from "express";
 import { tasksService } from "./tasks.service";
 
+const getAllTasks = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.id;
+        const userRole = req.user!.role;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+        const search = req.query.search as string;
+        const status = req.query.status as string;
+        const priority = req.query.priority as string;
+        const projectId = req.query.projectId as string;
+        const assignedTo = req.query.assignedTo as string;
+        const sortBy = req.query.sortBy as string;
+
+        const result = await tasksService.getAllTasks(
+            userId,
+            userRole,
+            { page, limit, search, status, priority, projectId, assignedTo, sortBy }
+        );
+
+        if (!result.success) {
+            return res.status(400).json(result);
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: result.data,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 const createTask = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.id;
@@ -348,6 +380,7 @@ const getOverdueTasks = async (req: Request, res: Response, next: NextFunction) 
 };
 
 export const tasksController = {
+    getAllTasks,
     createTask,
     getTasks,
     getTaskById,
