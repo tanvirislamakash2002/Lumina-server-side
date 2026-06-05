@@ -358,6 +358,151 @@ const getUserWorkload = async (userId: string) => {
     }
 };
 
+const getTeamMembersWithProjects = async (
+    currentUserId: string,
+    currentUserRole: string,
+    params: {
+        projectId?: string;
+        search?: string;
+    }
+) => {
+    try {
+        const { projectId, search } = params;
+
+        // Determine which users to show based on role
+        let userIds: string[] | null = null;
+
+        if (currentUserRole === "ADMIN" || currentUserRole === "PROJECT_MANAGER") {
+            // Admins and PMs see all users who are in at least one project
+            const usersWithProjects = await prisma.projectMember.findMany({
+                select: { userId: true },
+                distinct: ["userId"],
+            });
+            userIds = usersWithProjects.map(u => u.userId);
+        } else {
+            // Team members only see users in their projects
+            const userProjects = await prisma.projectMember.findMany({
+                where: { userId: currentUserId },
+                select: { projectId: true },
+            });
+            const projectIds = userProjects.map(p => p.projectId);
+
+            const projectMembers = await prisma.projectMember.findMany({
+                where: { projectId: { in: projectIds } },
+                select: { userId: true },
+                distinct: ["userId"],
+            });
+            userIds = [...new Set(projectMembers.map(m => m.userId))];
+        }
+
+        // Build where clause
+        const where: Prisma.UserWhereInput = {
+            id: { in: userIds },
+            accountStatus: "ACTIVE",
+        };
+
+        // Filter by specific project
+        if (projectId) {
+            const projectMembers = await prisma.projectMember.findMany({
+                where: { projectId },
+                select: { userId: true },
+            });
+            const projectUserIds = projectMembers.map(m => m.userId);
+            where.id = { in: projectUserIds };
+        }
+
+        // Search filter
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: "insensitive" } },
+                { email: { contains: search, mode: "insensitive" } },
+            ];
+        }
+
+        // Fetch users
+        const users = await prisma.user.findMany({
+            where,
+            orderBy: { name: "asc" },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                image: true,
+                role: true,
+                accountStatus: true,
+                createdAt: true,
+                _count: {
+                    select: {
+                        assignedTasks: true,
+                        projectMembers: true,
+                    },
+                },
+            },
+        });
+
+        // Get project IDs for each user (for filtering UI)
+        const usersWithProjectIds = await Promise.all(
+            users.map(async (user) => {
+                const projectMemberships = await prisma.projectMember.findMany({
+                    where: { userId: user.id },
+                    select: { projectId: true },
+                });
+                return {
+                    ...user,
+                    projectIds: projectMemberships.map(p => p.projectId),
+                };
+            })
+        );
+
+        return {
+            success: true,
+            data: {
+                members: usersWithProjectIds,
+                total: usersWithProjectIds.length,
+            },
+        };
+    } catch (error) {
+        console.error("Get team members with projects error:", error);
+        return { success: false, message: "Failed to fetch team members" };
+    }
+};
+
+const getUserProjects = async (userId: string) => {
+    try {
+        const memberships = await prisma.projectMember.findMany({
+            where: { userId },
+            include: {
+                project: {
+                    include: {
+                        _count: {
+                            select: { tasks: true, members: true },
+                        },
+                        tasks: {
+                            where: { status: "COMPLETED" },
+                            select: { id: true },
+                        },
+                    },
+                },
+            },
+        });
+
+        const projects = memberships.map(m => ({
+            ...m.project,
+            joinedAt: m.joinedAt,
+            stats: {
+                totalTasks: m.project._count.tasks,
+                completedTasks: m.project.tasks.length,
+                memberCount: m.project._count.members,
+                progress: m.project._count.tasks === 0 ? 0 : Math.round((m.project.tasks.length / m.project._count.tasks) * 100),
+            },
+        }));
+
+        return { success: true, data: { projects } };
+    } catch (error) {
+        return { success: false, message: "Failed to fetch user projects" };
+    }
+};
+
 export const usersService = {
     getProfile,
     updateProfile,
@@ -368,4 +513,6 @@ export const usersService = {
     updateUserRole,
     getTeamMembers,
     getUserWorkload,
+    getTeamMembersWithProjects,
+    getUserProjects
 };

@@ -240,6 +240,47 @@ const getUserWorkload = async (req: Request, res: Response, next: NextFunction) 
     }
 };
 
+const getTeamMembersWithProjects = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const currentUserId = req.query.currentUserId as string || req.user!.id;
+        const currentUserRole = req.query.userRole as string || req.user!.role;
+        const projectId = req.query.projectId as string;
+        const search = req.query.search as string;
+
+        const result = await usersService.getTeamMembersWithProjects(
+            currentUserId,
+            currentUserRole,
+            { projectId, search }
+        );
+
+        if (!result.success) {
+            return res.status(400).json(result);
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: result.data,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const getUserProjects = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { userId } = req.params;
+        const result = await usersService.getUserProjects(userId as string);
+        if (!result.success) {
+            return res.status(400).json(result);
+        }
+        return res.status(200).json({
+            success: true,
+            data: result.data,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 export const usersController = {
     getProfile,
     updateProfile,
@@ -250,4 +291,6 @@ export const usersController = {
     updateUserRole,
     getTeamMembers,
     getUserWorkload,
+    getTeamMembersWithProjects,
+    getUserProjects
 };

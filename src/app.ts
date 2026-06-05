@@ -17,6 +17,9 @@ import { notificationsRouter } from "./modules/notifications/notifications.route
 import { dashboardRouter } from "./modules/dashboard/dashboard.route";
 import { statsRouter } from "./modules/stats/stats.route";
 import { searchRouter } from "./modules/search/search.route";
+import { filtersRouter } from "./modules/filters/filters.route";
+import { adminRouter } from "./modules/admin/admin.route";
+import { settingsRouter } from "./modules/settings/settings.route";
 
 const app: Application = express()
 
@@ -74,6 +77,9 @@ app.use('/api/v1/notifications', notificationsRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
 app.use('/api/v1/stats', statsRouter);
 app.use('/api/v1/search', searchRouter);
+app.use('/api/v1/filters', filtersRouter);
+app.use('/api/v1/admin', adminRouter);
+app.use('/api/v1/settings', settingsRouter);
 
 app.get("/", (req, res) => {
     res.send("welcome to lumina server!")

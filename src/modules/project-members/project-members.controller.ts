@@ -217,6 +217,38 @@ const getAvailableMembers = async (req: Request, res: Response, next: NextFuncti
     }
 };
 
+const getUserProjectsById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { userId } = req.params;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
+
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID is required",
+            });
+        }
+
+        const result = await projectMembersService.getUserProjectsById(
+            userId as string,
+            { page, limit }
+        );
+
+        if (!result.success) {
+            return res.status(400).json(result);
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: result.data,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 export const projectMembersController = {
     addMember,
     removeMember,
@@ -224,4 +256,5 @@ export const projectMembersController = {
     checkMembership,
     getUserProjects,
     getAvailableMembers,
+    getUserProjectsById
 };

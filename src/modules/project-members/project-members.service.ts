@@ -420,6 +420,8 @@ const getAvailableMembers = async (
         const where: any = {
             id: { notIn: existingMemberIds },
             accountStatus: "ACTIVE",
+            // Only show TEAM_MEMBER (exclude ADMIN and PROJECT_MANAGER)
+            role: "TEAM_MEMBER",  // ← ADD THIS LINE
         };
 
         if (search) {
@@ -452,6 +454,85 @@ const getAvailableMembers = async (
     }
 };
 
+const getUserProjectsById = async (
+    userId: string,
+    params: {
+        page: number;
+        limit: number;
+    }
+) => {
+    try {
+        const { page, limit } = params;
+        const skip = (page - 1) * limit;
+
+        // Get all project memberships for the user
+        const memberships = await prisma.projectMember.findMany({
+            where: { userId },
+            skip,
+            take: limit,
+            orderBy: { joinedAt: "desc" },
+            include: {
+                project: {
+                    include: {
+                        _count: {
+                            select: {
+                                tasks: true,
+                                members: true,
+                            },
+                        },
+                        tasks: {
+                            where: { status: "COMPLETED" },
+                            select: { id: true },
+                        },
+                    },
+                },
+            },
+        });
+
+        const totalItems = await prisma.projectMember.count({
+            where: { userId },
+        });
+
+        // Calculate progress for each project
+        const projectsWithProgress = memberships.map(membership => {
+            const totalTasks = membership.project._count.tasks;
+            const completedTasks = membership.project.tasks.length;
+            const progress = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+
+            return {
+                id: membership.project.id,
+                name: membership.project.name,
+                description: membership.project.description,
+                status: membership.project.status,
+                deadline: membership.project.deadline,
+                joinedAt: membership.joinedAt,
+                stats: {
+                    totalTasks,
+                    completedTasks,
+                    memberCount: membership.project._count.members,
+                    progress,
+                },
+            };
+        });
+
+        return {
+            success: true,
+            data: {
+                projects: projectsWithProgress,
+                pagination: {
+                    currentPage: page,
+                    totalPages: Math.ceil(totalItems / limit),
+                    totalItems,
+                    itemsPerPage: limit,
+                },
+            },
+        };
+    } catch (error) {
+        console.error("Get user projects by ID error:", error);
+        return { success: false, message: "Failed to fetch user projects" };
+    }
+};
+
 export const projectMembersService = {
     addMember,
     removeMember,
@@ -459,4 +540,5 @@ export const projectMembersService = {
     checkMembership,
     getUserProjects,
     getAvailableMembers,
+    getUserProjectsById
 };
