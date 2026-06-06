@@ -14,6 +14,7 @@ router.get("/", projectsController.getProjects);
 router.get("/:projectId", projectsController.getProjectById);
 router.patch("/:projectId", projectsController.updateProject);
 router.delete("/:projectId", projectsController.deleteProject);
+router.post("/bulk-delete", auth(Role.ADMIN, Role.PROJECT_MANAGER), projectsController.bulkDeleteProjects);
 
 // Project analytics
 router.get("/:projectId/stats", projectsController.getProjectStats);

@@ -207,6 +207,42 @@ const deleteProject = async (req: Request, res: Response, next: NextFunction) =>
     }
 };
 
+const bulkDeleteProjects = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user!.id;
+        const userRole = req.user!.role;
+        const { projectIds } = req.body;
+
+        if (!projectIds || !Array.isArray(projectIds) || projectIds.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Project IDs array is required",
+            });
+        }
+
+        // Only Admin and Project Manager can bulk delete
+        if (userRole !== "ADMIN" && userRole !== "PROJECT_MANAGER") {
+            return res.status(403).json({
+                success: false,
+                message: "Only Project Managers and Admins can delete projects",
+            });
+        }
+
+        const result = await projectsService.bulkDeleteProjects(projectIds, userId, userRole);
+
+        if (!result.success) {
+            return res.status(400).json(result);
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: result.message,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 const getProjectStats = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user!.id;
@@ -269,6 +305,7 @@ export const projectsController = {
     getProjectById,
     updateProject,
     deleteProject,
+    bulkDeleteProjects,
     getProjectStats,
     getProjectProgress,
 };

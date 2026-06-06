@@ -279,12 +279,14 @@ const getAllProjects = async (req: Request, res: Response, next: NextFunction) =
         const limit = parseInt(req.query.limit as string) || 15;
         const search = req.query.search as string;
         const status = req.query.status as string;
+        const sort = req.query.sort as string;
 
         const result = await adminService.getAllProjects({
             page,
             limit,
             search,
             status,
+            sort
         });
 
         if (!result.success) {

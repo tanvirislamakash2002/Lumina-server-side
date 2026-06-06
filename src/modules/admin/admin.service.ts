@@ -514,10 +514,22 @@ const getAllProjects = async (params: {
     limit: number;
     search?: string;
     status?: string;
+    sort?: string;
 }) => {
     try {
-        const { page, limit, search, status } = params;
+        const { page, limit, search, status, sort } = params;
         const skip = (page - 1) * limit;
+
+        let orderBy: any = { createdAt: "desc" };
+        if (sort === "oldest") {
+            orderBy = { createdAt: "asc" };
+        } else if (sort === "name_asc") {
+            orderBy = { name: "asc" };
+        } else if (sort === "name_desc") {
+            orderBy = { name: "desc" };
+        } else if (sort === "deadline_asc") {
+            orderBy = { deadline: "asc" };
+        }
 
         const where: Prisma.ProjectWhereInput = {};
 
@@ -534,7 +546,7 @@ const getAllProjects = async (params: {
                 where,
                 skip,
                 take: limit,
-                orderBy: { createdAt: "desc" },
+                orderBy,
                 include: {
                     _count: {
                         select: { tasks: true, members: true },
@@ -768,7 +780,7 @@ const clearCache = async () => {
     try {
         // Implement cache clearing logic based on your caching strategy
         // This could be Redis flush, Next.js revalidation, etc.
-        
+
         // Placeholder for cache clearing
         return { success: true };
     } catch (error) {

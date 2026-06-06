@@ -393,6 +393,71 @@ const deleteProject = async (projectId: string, userId: string, userRole: string
     }
 };
 
+const bulkDeleteProjects = async (
+    projectIds: string[],
+    userId: string,
+    userRole: string
+) => {
+    try {
+        // Check permissions
+        const canDelete = userRole === "ADMIN" || userRole === "PROJECT_MANAGER";
+        if (!canDelete) {
+            return { success: false, message: "Only Project Managers and Admins can delete projects" };
+        }
+
+        let successCount = 0;
+        let failCount = 0;
+        const deletedProjects: string[] = [];
+
+        for (const projectId of projectIds) {
+            try {
+                // Check if project exists
+                const project = await prisma.project.findUnique({
+                    where: { id: projectId },
+                });
+
+                if (!project) {
+                    failCount++;
+                    continue;
+                }
+
+                // Delete project (cascade will handle tasks, members, activities)
+                await prisma.project.delete({
+                    where: { id: projectId },
+                });
+
+                // Log activity for each deleted project
+                await prisma.activity.create({
+                    data: {
+                        action: "PROJECT_DELETED",
+                        message: `Project "${project.name}" was deleted`,
+                        userId,
+                    },
+                });
+
+                successCount++;
+                deletedProjects.push(project.name);
+            } catch (error) {
+                console.error(`Failed to delete project ${projectId}:`, error);
+                failCount++;
+            }
+        }
+
+        return {
+            success: true,
+            message: `${successCount} project(s) deleted successfully${failCount > 0 ? `, ${failCount} failed` : ""}`,
+            data: {
+                successCount,
+                failCount,
+                deletedProjects,
+            },
+        };
+    } catch (error) {
+        console.error("Bulk delete projects error:", error);
+        return { success: false, message: "Failed to delete projects" };
+    }
+};
+
 const getProjectStats = async (projectId: string, userId: string, userRole: string) => {
     try {
         const project = await prisma.project.findUnique({
@@ -571,6 +636,7 @@ export const projectsService = {
     getProjectById,
     updateProject,
     deleteProject,
+    bulkDeleteProjects,
     getProjectStats,
     getProjectProgress,
 };

@@ -36,7 +36,7 @@ const updateProfile = async (
 ) => {
     try {
         const updateData: Prisma.UserUpdateInput = {};
-        
+
         if (data.name !== undefined) updateData.name = data.name;
         if (data.image !== undefined) updateData.image = data.image;
 
@@ -133,9 +133,12 @@ const getAllUsers = async (params: {
     limit: number;
     search?: string;
     role?: string;
+    status?: string;      
+    verified?: string;    
+    sort?: string;        
 }) => {
     try {
-        const { page, limit, search, role } = params;
+        const { page, limit, search, role, status, verified, sort } = params;
         const skip = (page - 1) * limit;
 
         const where: Prisma.UserWhereInput = {};
@@ -151,11 +154,33 @@ const getAllUsers = async (params: {
             where.role = role as any;
         }
 
+        // Add status filter
+        if (status && status !== "all") {
+            where.accountStatus = status as any;
+        }
+
+        // Add verified filter
+        if (verified === "verified") {
+            where.emailVerified = true;
+        } else if (verified === "unverified") {
+            where.emailVerified = false;
+        }
+
+        // Add sort options
+        let orderBy: any = { createdAt: "desc" };
+        if (sort === "oldest") {
+            orderBy = { createdAt: "asc" };
+        } else if (sort === "name_asc") {
+            orderBy = { name: "asc" };
+        } else if (sort === "name_desc") {
+            orderBy = { name: "desc" };
+        }
+
         const users = await prisma.user.findMany({
             where,
             skip,
             take: limit,
-            orderBy: { createdAt: "desc" },
+            orderBy,
             select: {
                 id: true,
                 name: true,

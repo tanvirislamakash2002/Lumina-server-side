@@ -617,7 +617,7 @@ const updateTask = async (
 
         if (data.title !== undefined) updateData.title = data.title;
         if (data.description !== undefined) updateData.description = data.description || null;
-        
+
         // Handle assignedTo using connect/disconnect
         if (data.assignedTo !== undefined) {
             if (data.assignedTo === null) {
@@ -626,7 +626,7 @@ const updateTask = async (
                 updateData.assignedUser = { connect: { id: data.assignedTo } };
             }
         }
-        
+
         if (data.dueDate !== undefined) updateData.dueDate = data.dueDate;
         if (data.priority !== undefined) updateData.priority = data.priority as Priority;
         if (data.status !== undefined) updateData.status = data.status as TaskStatus;
@@ -835,15 +835,23 @@ const getTasksByUser = async (
     params: {
         page: number;
         limit: number;
+        search?: string;
         status?: string;
         projectId?: string;
     }
 ) => {
     try {
-        const { page, limit, status, projectId } = params;
+        const { page, limit, search, status, projectId } = params;
         const skip = (page - 1) * limit;
 
         const where: Prisma.TaskWhereInput = { assignedTo: userId };
+
+        if (search) { 
+            where.OR = [
+                { title: { contains: search, mode: "insensitive" } },
+                { description: { contains: search, mode: "insensitive" } },
+            ];
+        }
 
         if (status && status !== "all") {
             where.status = status as TaskStatus;
