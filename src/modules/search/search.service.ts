@@ -1,4 +1,5 @@
-import { Prisma } from "../../generated/prisma";
+
+import { Prisma } from "../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
 
 // In-memory store for recent searches (for demo)

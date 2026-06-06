@@ -1,4 +1,4 @@
-import { Prisma, ProjectStatus } from "../../generated/prisma";
+import { Prisma, ProjectStatus } from "../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
 
 const createProject = async (

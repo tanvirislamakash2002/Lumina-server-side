@@ -1,7 +1,7 @@
 import express, { Router } from "express";
 import auth from "../../middlewares/auth";
 import { uploadController, uploadMiddleware } from "./upload.controller";
-import { Role } from "../../generated/prisma";
+import { Role } from "../../generated/prisma/enums";
 
 const router = express.Router();
 

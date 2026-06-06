@@ -1,4 +1,4 @@
-import { Prisma, NotificationType } from "../../generated/prisma";
+import { Prisma, NotificationType } from "../../generated/prisma/client";
 import { prisma } from "../../lib/prisma";
 
 // User preferences storage (you may want to add this to your schema)

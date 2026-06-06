@@ -27,8 +27,8 @@ const app: Application = express()
 const allowedOrigins = [
     "http://localhost:3000",
     "http://localhost:5000",
-    "https://lumina.vercel.app",
-    "https://lumina-server.vercel.app",
+    "https://lumina7.vercel.app",
+    "https://lumina-server7.vercel.app",
     process.env.APP_URL || "http://localhost:3000",
     process.env.PROD_APP_URL, // Production frontend URL
 ].filter(Boolean);

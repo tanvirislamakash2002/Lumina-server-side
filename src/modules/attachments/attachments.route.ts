@@ -1,7 +1,7 @@
 import express, { Router } from "express";
 import multer from "multer";
 import auth from "../../middlewares/auth";
-import { Role } from "../../generated/prisma";
+import { Role } from "../../generated/prisma/enums";
 import { attachmentsController } from "./attachments.controller";
 
 const router = express.Router();

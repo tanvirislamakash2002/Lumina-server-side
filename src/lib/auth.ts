@@ -24,8 +24,8 @@ export const auth = betterAuth({
     baseURL: process.env.BETTER_AUTH_URL || "http://localhost:5000",
     trustedOrigins: [
         "http://localhost:3000",
-        "https://lumina.vercel.app",
-        "https://lumina-server.vercel.app",
+        "https://lumina7.vercel.app",
+        "https://lumina-server7.vercel.app",
     ],
     cookie: {
         name: "lumina-auth",

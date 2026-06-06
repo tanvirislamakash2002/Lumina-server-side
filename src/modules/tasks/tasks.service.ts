@@ -1,4 +1,4 @@
-import { Prisma, Priority, TaskStatus } from "../../generated/prisma";
+import { Prisma, Priority, TaskStatus } from "../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 
 const getAllTasks = async (

@@ -1,6 +1,6 @@
 import express, { Router } from "express";
 import auth from "../../middlewares/auth";
-import { Role } from "../../generated/prisma";
+import { Role } from "../../generated/prisma/enums";
 import { projectMembersController } from "./project-members.controller";
 
 const router = express.Router();
