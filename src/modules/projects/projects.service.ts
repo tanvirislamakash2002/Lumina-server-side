@@ -165,7 +165,7 @@ const getProjects = async (
         });
 
         // Get summary stats for dashboard
-        const stats = await prisma.$transaction([
+        const [total, active, completed, onHold] = await Promise.all([
             prisma.project.count(),
             prisma.project.count({ where: { status: "ACTIVE" } }),
             prisma.project.count({ where: { status: "COMPLETED" } }),
@@ -183,10 +183,10 @@ const getProjects = async (
                     itemsPerPage: limit,
                 },
                 stats: {
-                    total: stats[0],
-                    active: stats[1],
-                    completed: stats[2],
-                    onHold: stats[3],
+                    total,
+                    active,
+                    completed,
+                    onHold,
                 },
             },
         };
@@ -480,7 +480,19 @@ const getProjectStats = async (projectId: string, userId: string, userRole: stri
             return { success: false, message: "You don't have access to this project" };
         }
 
-        const [tasksByPriority, tasksByStatus, overdueTasks, projectMembers] = await Promise.all([
+        // Get task counts
+        const [totalTasks, completedTasks, inProgressTasks, todoTasks, overdueTasks, tasksByPriority, tasksByStatus, projectMembers] = await Promise.all([
+            prisma.task.count({ where: { projectId } }),
+            prisma.task.count({ where: { projectId, status: "COMPLETED" } }),
+            prisma.task.count({ where: { projectId, status: "IN_PROGRESS" } }),
+            prisma.task.count({ where: { projectId, status: "TODO" } }),
+            prisma.task.count({
+                where: {
+                    projectId,
+                    status: { not: "COMPLETED" },
+                    dueDate: { lt: new Date() },
+                },
+            }),
             prisma.task.groupBy({
                 by: ["priority"],
                 where: { projectId },
@@ -490,13 +502,6 @@ const getProjectStats = async (projectId: string, userId: string, userRole: stri
                 by: ["status"],
                 where: { projectId },
                 _count: true,
-            }),
-            prisma.task.count({
-                where: {
-                    projectId,
-                    status: { not: "COMPLETED" },
-                    dueDate: { lt: new Date() },
-                },
             }),
             prisma.projectMember.findMany({
                 where: { projectId },
@@ -512,7 +517,7 @@ const getProjectStats = async (projectId: string, userId: string, userRole: stri
             }),
         ]);
 
-        // Get workload for each member by counting their tasks directly
+        // Get workload for each member
         const workload = await Promise.all(
             projectMembers.map(async (member) => {
                 const tasks = await prisma.task.findMany({
@@ -538,6 +543,11 @@ const getProjectStats = async (projectId: string, userId: string, userRole: stri
         return {
             success: true,
             data: {
+                totalTasks,
+                completedTasks,
+                inProgressTasks,
+                todoTasks,
+                overdueTasks,
                 tasksByPriority: tasksByPriority.map(t => ({
                     priority: t.priority,
                     count: t._count,
@@ -546,7 +556,6 @@ const getProjectStats = async (projectId: string, userId: string, userRole: stri
                     status: t.status,
                     count: t._count,
                 })),
-                overdueTasks,
                 memberWorkload: workload,
             },
         };

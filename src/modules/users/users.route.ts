@@ -26,12 +26,12 @@ router.get("/team-members", usersController.getTeamMembersWithProjects);
 // ============ Admin & Project Manager Routes ============
 // Project Managers also need to see all users for task assignment
 router.get("/", auth(Role.ADMIN, Role.PROJECT_MANAGER), usersController.getAllUsers);
-router.get("/:userId", auth(Role.ADMIN, Role.PROJECT_MANAGER), usersController.getUserById);
+router.get("/:userId", auth(Role.ADMIN, Role.PROJECT_MANAGER, Role.TEAM_MEMBER), usersController.getUserById);
 
 // ============ Admin Only Routes ============
 router.patch("/:userId/role", auth(Role.ADMIN), usersController.updateUserRole);
 
 
-router.get("/:userId/projects", auth(Role.ADMIN, Role.PROJECT_MANAGER), usersController.getUserProjects);
+router.get("/:userId/projects", auth(Role.ADMIN, Role.PROJECT_MANAGER, Role.TEAM_MEMBER), usersController.getUserProjects);
 
 export const usersRouter: Router = router;

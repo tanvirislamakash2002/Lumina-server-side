@@ -188,9 +188,11 @@ const getAllUsers = async (params: {
     search?: string;
     role?: string;
     status?: string;
+    verified?: string;
+    sort?: string;
 }) => {
     try {
-        const { page, limit, search, role, status } = params;
+        const { page, limit, search, role, status, verified, sort } = params;
         const skip = (page - 1) * limit;
 
         const where: Prisma.UserWhereInput = {};
@@ -210,16 +212,32 @@ const getAllUsers = async (params: {
             where.accountStatus = status as any;
         }
 
+        if (verified === "verified") {
+            where.emailVerified = true;
+        } else if (verified === "unverified") {
+            where.emailVerified = false;
+        }
+
+        let orderBy: any = { createdAt: "desc" };
+        if (sort === "oldest") {
+            orderBy = { createdAt: "asc" };
+        } else if (sort === "name_asc") {
+            orderBy = { name: "asc" };
+        } else if (sort === "name_desc") {
+            orderBy = { name: "desc" };
+        }
+
         const [users, totalItems] = await Promise.all([
             prisma.user.findMany({
                 where,
                 skip,
                 take: limit,
-                orderBy: { createdAt: "desc" },
+                orderBy,
                 select: {
                     id: true,
                     name: true,
                     email: true,
+                    emailVerified: true,
                     image: true,
                     role: true,
                     accountStatus: true,
@@ -249,7 +267,10 @@ const getAllUsers = async (params: {
         return {
             success: true,
             data: {
-                users,
+                users: users.map(user => ({
+                    ...user,
+                    emailVerified: user.emailVerified,
+                })),
                 stats,
                 pagination: {
                     currentPage: page,

@@ -1,4 +1,5 @@
-import { Prisma, Priority, TaskStatus } from "../../generated/prisma/enums";
+import { Prisma } from "../../generated/prisma/client";
+import { Priority, TaskStatus } from "../../generated/prisma/enums";
 import { prisma } from "../../lib/prisma";
 
 const getAllTasks = async (
@@ -110,7 +111,7 @@ const getAllTasks = async (
         const totalItems = await prisma.task.count({ where });
 
         // Get stats
-        const stats = await prisma.$transaction([
+        const [total, todo, inProgress, completed, overdue] = await Promise.all([
             prisma.task.count({ where }),
             prisma.task.count({ where: { ...where, status: "TODO" } }),
             prisma.task.count({ where: { ...where, status: "IN_PROGRESS" } }),
@@ -148,11 +149,11 @@ const getAllTasks = async (
                     itemsPerPage: limit,
                 },
                 stats: {
-                    total: stats[0],
-                    todo: stats[1],
-                    inProgress: stats[2],
-                    completed: stats[3],
-                    overdue: stats[4],
+                    total,
+                    todo,
+                    inProgress,
+                    completed,
+                    overdue,
                 },
             },
         };
@@ -311,8 +312,7 @@ const getTasks = async (
             where: {
                 id: projectId,
                 OR: [
-                    { members: { some: { userId } } },
-                    { createdBy: userId }, // If you have createdBy field
+                    { members: { some: { userId } } }
                 ],
             },
         });
@@ -399,7 +399,7 @@ const getTasks = async (
         const totalItems = await prisma.task.count({ where });
 
         // Get stats
-        const stats = await prisma.$transaction([
+        const [total, todo, inProgress, completed, overdue] = await Promise.all([
             prisma.task.count({ where: { projectId } }),
             prisma.task.count({ where: { projectId, status: "TODO" } }),
             prisma.task.count({ where: { projectId, status: "IN_PROGRESS" } }),
@@ -436,11 +436,11 @@ const getTasks = async (
                     itemsPerPage: limit,
                 },
                 stats: {
-                    total: stats[0],
-                    todo: stats[1],
-                    inProgress: stats[2],
-                    completed: stats[3],
-                    overdue: stats[4],
+                    total,
+                    todo,
+                    inProgress,
+                    completed,
+                    overdue,
                 },
             },
         };
@@ -846,7 +846,7 @@ const getTasksByUser = async (
 
         const where: Prisma.TaskWhereInput = { assignedTo: userId };
 
-        if (search) { 
+        if (search) {
             where.OR = [
                 { title: { contains: search, mode: "insensitive" } },
                 { description: { contains: search, mode: "insensitive" } },

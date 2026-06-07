@@ -133,9 +133,9 @@ const getAllUsers = async (params: {
     limit: number;
     search?: string;
     role?: string;
-    status?: string;      
-    verified?: string;    
-    sort?: string;        
+    status?: string;
+    verified?: string;
+    sort?: string;
 }) => {
     try {
         const { page, limit, search, role, status, verified, sort } = params;
@@ -154,19 +154,16 @@ const getAllUsers = async (params: {
             where.role = role as any;
         }
 
-        // Add status filter
         if (status && status !== "all") {
             where.accountStatus = status as any;
         }
 
-        // Add verified filter
         if (verified === "verified") {
             where.emailVerified = true;
         } else if (verified === "unverified") {
             where.emailVerified = false;
         }
 
-        // Add sort options
         let orderBy: any = { createdAt: "desc" };
         if (sort === "oldest") {
             orderBy = { createdAt: "asc" };
@@ -176,33 +173,31 @@ const getAllUsers = async (params: {
             orderBy = { name: "desc" };
         }
 
-        const users = await prisma.user.findMany({
-            where,
-            skip,
-            take: limit,
-            orderBy,
-            select: {
-                id: true,
-                name: true,
-                email: true,
-                emailVerified: true,
-                image: true,
-                role: true,
-                accountStatus: true,
-                createdAt: true,
-                updatedAt: true,
-                _count: {
-                    select: {
-                        assignedTasks: true,
-                        projectMembers: true,
+        const [users, totalItems, totalUsers, adminCount, projectManagerCount, teamMemberCount, activeUsers] = await Promise.all([
+            prisma.user.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy,
+                select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    emailVerified: true,
+                    image: true,
+                    role: true,
+                    accountStatus: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    _count: {
+                        select: {
+                            assignedTasks: true,
+                            projectMembers: true,
+                        },
                     },
                 },
-            },
-        });
-
-        const totalItems = await prisma.user.count({ where });
-
-        const stats = await prisma.$transaction([
+            }),
+            prisma.user.count({ where }),
             prisma.user.count(),
             prisma.user.count({ where: { role: "ADMIN" } }),
             prisma.user.count({ where: { role: "PROJECT_MANAGER" } }),
@@ -221,11 +216,11 @@ const getAllUsers = async (params: {
                     itemsPerPage: limit,
                 },
                 stats: {
-                    totalUsers: stats[0],
-                    adminCount: stats[1],
-                    projectManagerCount: stats[2],
-                    teamMemberCount: stats[3],
-                    activeUsers: stats[4],
+                    totalUsers,
+                    adminCount,
+                    projectManagerCount,
+                    teamMemberCount,
+                    activeUsers,
                 },
             },
         };

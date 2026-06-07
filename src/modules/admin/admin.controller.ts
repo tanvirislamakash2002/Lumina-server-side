@@ -44,6 +44,8 @@ const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
         const search = req.query.search as string;
         const role = req.query.role as string;
         const status = req.query.status as string;
+        const verified = req.query.verified as string;
+        const sort = req.query.sort as string;
 
         const result = await adminService.getAllUsers({
             page,
@@ -51,6 +53,8 @@ const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
             search,
             role,
             status,
+            verified,
+            sort,
         });
 
         if (!result.success) {
