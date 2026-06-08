@@ -797,6 +797,36 @@ const getAuditTrail = async (params: {
     }
 };
 
+const getAuditStats = async (days: number) => {
+    try {
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - days);
+        
+        const allLogs = await prisma.activity.findMany({
+            where: { createdAt: { gte: startDate } },
+            select: { action: true }
+        });
+
+        const stats = {
+            total: allLogs.length,
+            roleChanges: allLogs.filter(l => l.action === "ROLE_CHANGE").length,
+            userManagement: allLogs.filter(l => 
+                ["USER_CREATED", "USER_UPDATED", "USER_DELETED", "USER_SUSPENDED", "USER_ACTIVATED"].includes(l.action)
+            ).length,
+            projectDeletions: allLogs.filter(l => l.action === "PROJECT_DELETED").length,
+            taskDeletions: allLogs.filter(l => l.action === "TASK_DELETED").length,
+            successfulLogins: allLogs.filter(l => l.action === "LOGIN_SUCCESS").length,
+            failedLogins: allLogs.filter(l => l.action === "LOGIN_FAILED").length,
+            sensitiveActions: allLogs.filter(l => 
+                ["ADMIN_ACTION", "ROLE_CHANGE", "USER_DELETED", "PROJECT_DELETED"].includes(l.action)
+            ).length,
+        };
+        return { success: true, data: stats };
+    } catch (error) {
+        return { success: false, message: "Failed to fetch audit stats" };
+    }
+};
+
 const clearCache = async () => {
     try {
         // Implement cache clearing logic based on your caching strategy
@@ -824,5 +854,6 @@ export const adminService = {
     deleteProject,
     getSystemLogs,
     getAuditTrail,
+    getAuditStats,
     clearCache,
 };

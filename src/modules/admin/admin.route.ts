@@ -28,7 +28,7 @@ router.delete("/projects/:projectId", adminController.deleteProject);
 // Logs & Audit
 router.get("/logs", adminController.getSystemLogs);
 router.get("/audit", adminController.getAuditTrail);
-
+router.get("/audit/stats", adminController.getAuditStats);
 // System
 router.post("/cache/clear", adminController.clearCache);
 

@@ -389,6 +389,15 @@ const getAuditTrail = async (req: Request, res: Response, next: NextFunction) =>
     }
 };
 
+const getAuditStats = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const days = parseInt(req.query.days as string) || 90;
+        const result = await adminService.getAuditStats(days);
+        if (!result.success) return res.status(400).json(result);
+        return res.status(200).json({ success: true, data: result.data });
+    } catch (error) { next(error); }
+};
+
 const clearCache = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const result = await adminService.clearCache();
@@ -420,5 +429,6 @@ export const adminController = {
     deleteProject,
     getSystemLogs,
     getAuditTrail,
+    getAuditStats,
     clearCache,
 };

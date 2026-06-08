@@ -16,6 +16,9 @@ enum ActivityAction {
   USER_LOGOUT
   USER_REGISTER
   ADMIN_ACTION
+  ROLE_CHANGE
+  LOGIN_SUCCESS
+  LOGIN_FAILED
 }
 
 model Activity {
