@@ -252,11 +252,13 @@ const getTeamMembersWithProjects = async (req: Request, res: Response, next: Nex
         const currentUserRole = req.query.userRole as string || req.user!.role;
         const projectId = req.query.projectId as string;
         const search = req.query.search as string;
+        const page = parseInt(req.query.page as string) || 1;
+        const limit = parseInt(req.query.limit as string) || 20;
 
         const result = await usersService.getTeamMembersWithProjects(
             currentUserId,
             currentUserRole,
-            { projectId, search }
+            { projectId, search, page, limit }
         );
 
         if (!result.success) {

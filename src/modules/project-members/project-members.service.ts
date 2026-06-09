@@ -420,8 +420,7 @@ const getAvailableMembers = async (
         const where: any = {
             id: { notIn: existingMemberIds },
             accountStatus: "ACTIVE",
-            // Only show TEAM_MEMBER (exclude ADMIN and PROJECT_MANAGER)
-            role: "TEAM_MEMBER",  // ← ADD THIS LINE
+            role: { in: ["PROJECT_MANAGER", "TEAM_MEMBER"] },
         };
 
         if (search) {

@@ -384,10 +384,13 @@ const getTeamMembersWithProjects = async (
     params: {
         projectId?: string;
         search?: string;
+        page?: number;
+        limit?: number;
     }
 ) => {
     try {
-        const { projectId, search } = params;
+        const { projectId, search, page = 1, limit = 20 } = params;
+        const skip = (page - 1) * limit;
 
         // Determine which users to show based on role
         let userIds: string[] | null = null;
@@ -440,9 +443,12 @@ const getTeamMembersWithProjects = async (
         }
 
         // Fetch users
-        const users = await prisma.user.findMany({
-            where,
-            orderBy: { name: "asc" },
+        const [users, totalItems] = await Promise.all([
+            prisma.user.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { name: "asc" },
             select: {
                 id: true,
                 name: true,
@@ -458,7 +464,9 @@ const getTeamMembersWithProjects = async (
                     },
                 },
             },
-        });
+        }),
+        prisma.user.count({ where }),
+        ]);
 
         // Get project IDs for each user (for filtering UI)
         const usersWithProjectIds = await Promise.all(
@@ -478,7 +486,13 @@ const getTeamMembersWithProjects = async (
             success: true,
             data: {
                 members: usersWithProjectIds,
-                total: usersWithProjectIds.length,
+                total: totalItems,
+                pagination: {
+                    currentPage: page,
+                    totalPages: Math.ceil(totalItems / limit),
+                    totalItems,
+                    itemsPerPage: limit,
+                },
             },
         };
     } catch (error) {
